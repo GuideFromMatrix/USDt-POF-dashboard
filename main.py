@@ -1,9 +1,9 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import router
 import uvicorn
 import os
+from datetime import datetime
 
 app = FastAPI()
 
@@ -19,10 +19,18 @@ app.add_middleware(
 # Include your API router
 app.include_router(router)
 
-# Optional test route for checking server is alive
+# Root route
 @app.get("/")
 def read_root():
     return {"status": "Server is live!"}
+
+# Test-status route
+@app.get("/test-status")
+def test_status():
+    return {
+        "message": "Test status OK ✅",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Use Render's port if available
