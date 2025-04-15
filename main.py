@@ -1,37 +1,41 @@
-from fastapi import FastAPI
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from routes import router
-import uvicorn
-import os
-from datetime import datetime
+from pydantic import BaseModel
+from typing import Dict
 
 app = FastAPI()
 
-# Allow frontend to connect
+# Enable CORS so frontend can talk to backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # You can restrict this in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include your API router
-app.include_router(router)
+# Dummy in-memory "database"
+fake_users_db: Dict[str, str] = {}
 
-# Root route
-@app.get("/")
-def read_root():
-    return {"status": "Server is live!"}
+# Models
+class User(BaseModel):
+    email: str
+    password: str
 
-# Test-status route
-@app.get("/test-status")
-def test_status():
-    return {
-        "message": "Test status OK ✅",
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    }
+# Signup endpoint
+@app.post("/signup")
+def signup(user: User):
+    if user.email in fake_users_db:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    fake_users_db[user.email] = user.password
+    print(f"✅ New user signed up: {user.email}")
+    return {"message": "Signup successful"}
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Use Render's port if available
-    uvicorn.run(app, host="0.0.0.0", port=port)
+# Login endpoint
+@app.post("/login")
+def login(user: User):
+    if user.email not in fake_users_db or fake_users_db[user.email] != user.password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    print(f"✅ User logged in: {user.email}")
+    return {"token": "dummy-token-for-" + user.email}
