@@ -6,30 +6,40 @@ from fastapi.middleware.cors import CORSMiddleware
 # Initialize the FastAPI app
 app = FastAPI()
 
-# Add CORS middleware to allow frontend to communicate
+# Allow frontend CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # You can restrict this to your frontend domain in production
+    allow_origins=["*"],  # In production, restrict to your frontend domain
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Pydantic model for user data validation
+# Pydantic model for signup/login
 class User(BaseModel):
     email: str
     password: str
 
-# In-memory user storage (Replace with your real database in production)
+# In-memory "fake" user storage
 users = []
 
-# POST endpoint for user signup
+# Optional root route (for 404 testing)
+@app.get("/")
+async def root():
+    return {"message": "Backend is running, bruda 😎"}
+
+# POST /signup
 @app.post("/signup")
 async def signup(user: User):
-    # Check if the email already exists
-    if any(u['email'] == user.email for u in users):
+    if any(u["email"] == user.email for u in users):
         raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Save the user to the in-memory list
     users.append({"email": user.email, "password": user.password})
     return {"message": "Signup successful"}
+
+# POST /login
+@app.post("/login")
+async def login(user: User):
+    for u in users:
+        if u["email"] == user.email and u["password"] == user.password:
+            return {"message": "Login successful", "token": "mocked-jwt-token"}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
