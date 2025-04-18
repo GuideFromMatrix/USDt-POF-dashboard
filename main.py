@@ -2,8 +2,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-import base64
-import json
 
 # Initialize the FastAPI app
 app = FastAPI()
@@ -55,10 +53,17 @@ async def signup(user: User):
 async def login(user: User):
     for u in users:
         if u["email"] == user.email and u["password"] == user.password:
-            # Create a base64-encoded payload with email
-            payload = {"email": user.email}
-            encoded_payload = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-            # Return a mock token (fake header.payload.signature)
-            token = f"header.{encoded_payload}.signature"
-            return {"message": "Login successful", "token": token}
+            return {"message": "Login successful", "token": "mocked-jwt-token"}
     raise HTTPException(status_code=401, detail="Invalid credentials")
+
+# GET /dashboard-data
+@app.get("/dashboard-data")
+async def get_dashboard_data(email: str):
+    user = get_user(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "wallet": user["wallet"],
+        "wallet_history": user["wallet_history"],
+        "internal_balance": user["internal_balance"]
+    }
