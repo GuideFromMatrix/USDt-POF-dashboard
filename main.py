@@ -1,5 +1,4 @@
 
-
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,3 +82,33 @@ async def connect_wallet(data: WalletConnectRequest):
     user["wallet"] = data.wallet_address
     user["wallet_history"].append(data.wallet_address)
     return {"message": "Wallet connected successfully"}
+
+# === ✅ STEP 5: POST /send-token ===
+
+class TokenTransferRequest(BaseModel):
+    email: str
+    wallet_address: str
+
+@app.post("/send-token")
+async def send_token(data: TokenTransferRequest):
+    user = get_user(data.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Simulate sending 1 USDt BNB to user's wallet
+    mock_tx_hash = "0xMOCKEDTXHASH123456789abcdef"
+
+    # Update user wallet + transaction history
+    user["wallet"] = data.wallet_address
+    user["wallet_history"].append({
+        "tx_hash": mock_tx_hash,
+        "amount": 1,
+        "token": "USDt",
+        "status": "sent"
+    })
+    user["internal_balance"] += 1
+
+    return {
+        "message": "1 USDt token sent to user's wallet (mocked)",
+        "tx_hash": mock_tx_hash
+    }
