@@ -67,3 +67,18 @@ async def get_dashboard_data(email: str):
         "wallet_history": user["wallet_history"],
         "internal_balance": user["internal_balance"]
     }
+
+# === ✅ STEP 4: POST /connect-wallet ===
+
+class WalletConnectRequest(BaseModel):
+    email: str
+    wallet_address: str
+
+@app.post("/connect-wallet")
+async def connect_wallet(data: WalletConnectRequest):
+    user = get_user(data.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user["wallet"] = data.wallet_address
+    user["wallet_history"].append(data.wallet_address)
+    return {"message": "Wallet connected successfully"}
