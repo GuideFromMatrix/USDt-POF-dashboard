@@ -20,8 +20,14 @@ class User(BaseModel):
     email: str
     password: str
 
-# In-memory "fake" user storage
+# In-memory "fake" user storage with wallet-related fields
 users = []
+
+def get_user(email: str):
+    for user in users:
+        if user["email"] == email:
+            return user
+    return None
 
 # Optional root route (for 404 testing)
 @app.get("/")
@@ -33,7 +39,13 @@ async def root():
 async def signup(user: User):
     if any(u["email"] == user.email for u in users):
         raise HTTPException(status_code=400, detail="Email already registered")
-    users.append({"email": user.email, "password": user.password})
+    users.append({
+        "email": user.email,
+        "password": user.password,
+        "wallet": None,
+        "wallet_history": [],
+        "internal_balance": 0
+    })
     return {"message": "Signup successful"}
 
 # POST /login
